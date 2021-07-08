@@ -1,10 +1,14 @@
-﻿namespace uDateFoldersy.UmbracoEvents
+﻿using Umbraco.Core.Cache;
+using Umbraco.Core.Events;
+
+namespace uDateFoldersy.UmbracoEvents
 {
     using System;
     using System.Linq;
     using System.Web;
 
-    using Umbraco.Core.Publishing;
+    using Umbraco.Core.Composing;
+    using Umbraco.Core.Services.Implement;
 
     using uDateFoldersy;
     using uDateFoldersy.Helpers;
@@ -13,11 +17,16 @@
     using Umbraco.Core.Models;
     using Umbraco.Core.Services;
 
-    using umbraco;
-
-    public class UmbracoNodeEventsForDateFolders : ApplicationEventHandler
+    public class UmbracoNodeEventsComposer : ComponentComposer<UmbracoNodeEventsForDateFolders>, IUserComposer
     {
-        private const string CacheKey = "uDateFoldersy.UmbracoEvents.";
+
+    }
+
+    public class UmbracoNodeEventsForDateFolders : IComponent
+    {
+	    private readonly IAppCache _requestCache;
+
+	    private const string CacheKey = "uDateFoldersy.UmbracoEvents.";
 
         private const string EnsureCorrectParentForPost = CacheKey + "EnsureCorrectParentForPost";
 
@@ -25,61 +34,42 @@
 
         private const string IsBeingCreated = CacheKey + "IsBeingCreated";
 
-       // private const string SaveEventIgnoreFirst = CacheKey + "SaveEventIgnoreFirst";
-
-
-        protected override void ApplicationInitialized(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-{
- 	     base.ApplicationInitialized(umbracoApplication, applicationContext);
-            ContentService.Creating += this.ContentService_Creating;
-            //ContentService.Created += this.ContentService_Created;
-            ContentService.Saved += this.ContentService_Saved;
-            ContentService.Moved += this.ContentService_Moved;
-            PublishingStrategy.Published += new Umbraco.Core.Events.TypedEventHandler<IPublishingStrategy, Umbraco.Core.Events.PublishEventArgs<IContent>>(PublishingStrategy_Published);
-    }
-
-
-        //public void OnApplicationInitialized(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        //{
-        //    ContentService.Creating += this.ContentService_Creating;
-        //    //ContentService.Created += this.ContentService_Created;
-        //    ContentService.Saved += this.ContentService_Saved;
-        //    ContentService.Moved += this.ContentService_Moved;
-        //    PublishingStrategy.Published += new Umbraco.Core.Events.TypedEventHandler<IPublishingStrategy, Umbraco.Core.Events.PublishEventArgs<IContent>>(PublishingStrategy_Published);
-        //}
-
-
+        public UmbracoNodeEventsForDateFolders(AppCaches appCaches)
+        {
+	        _requestCache = appCaches.RequestCache;
+        }
 
         /// <summary>
         /// This is a hack/work around because Umbraco 6.0.3 does not update it's cach properly.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void PublishingStrategy_Published(IPublishingStrategy sender, Umbraco.Core.Events.PublishEventArgs<IContent> e)
+        private void ContentService_Publishing(IContentService sender, ContentPublishingEventArgs e)
         {
-            var config = ConfigReader.Instance;
+	        var config = ConfigReader.Instance;
 
-            if (!config.UseAutoDateFolders()) { return; }
+	        if (!config.UseAutoDateFolders()) { return; }
 
-            foreach (var entity in e.PublishedEntities)
-            {
-                if (!config.GetTargetDocTypeAliases().Contains(
-                        entity.ContentType.Alias))
-                {
-                    continue;
-                }
-                library.UpdateDocumentCache(entity.Id);
-            }
+	        foreach (var entity in e.PublishedEntities)
+	        {
+		        if (!config.GetTargetDocTypeAliases().Contains(
+			        entity.ContentType.Alias))
+		        {
+			        continue;
+		        }
+                _requestCache.Clear(entity.Id.ToString());
+	        }
         }
 
-        void ContentService_Creating(IContentService sender, Umbraco.Core.Events.NewEventArgs<IContent> e)
+        void ContentService_Creating(IContentService sender, ContentSavingEventArgs e)
         {
+	        var content = e.SavedEntities.Select(c => c.ContentType.Alias);
             var config = ConfigReader.Instance;
 
             if (!config.UseAutoDateFolders()) { return; }
-            if (!config.GetTargetDocTypeAliases().Contains(e.Entity.ContentType.Alias)) { return; }
+            if (!config.GetTargetDocTypeAliases().Any(p => content.Contains(p))) { return; }
 
-            // entity id is always 0 at this point
+	        // entity id is always 0 at this point
             SetFlag(IsBeingCreated, string.Empty);
         }
 
@@ -89,45 +79,47 @@
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The event arg.</param>
-        void ContentService_Moved(IContentService sender, Umbraco.Core.Events.MoveEventArgs<IContent> e)
+        void ContentService_Moved(IContentService sender, Umbraco.Core.Events.MoveEventArgs<IContent> entities)
         {
+	        var allContent = entities.MoveInfoCollection.Select(c => c.Entity.ContentType.Alias);
             var config = ConfigReader.Instance;
 
             if (!config.UseAutoDateFolders()) { return; }
 
-            if (!config.GetTargetDocTypeAliases().Contains(e.Entity.ContentType.Alias)) { return; }
+            if (!config.GetTargetDocTypeAliases().Any(p => allContent.Contains(p))) { return; }
 
             // if this event is occuring after the created event, so do nothing
             if (this.Flagged(IsBeingCreated, string.Empty)) { return; }
 
-            // if ensure correct date was called by another event, do nothing
-            if (this.Flagged(EnsureCorrectDate, e.Entity.Id.ToString())) { return; }
-
-            // if thie move was a result of EnsureCorrectParentForPost, do nothing
-            if (this.Flagged(EnsureCorrectParentForPost, e.Entity.Id.ToString())) { return; } 
-
-            var contentService = ApplicationContext.Current.Services.ContentService;
-
-            // this may have been a move to the recycle bin!
-            bool isMoveToBin = e.Entity.ParentId == -20;
-
-            // check up the .parent path for recycle bin
-            var current = contentService.GetById(e.Entity.Id);
-            while (current.ParentId != -1)
+            foreach (var e in entities.MoveInfoCollection)
             {
-                if (current.ParentId == -20)
-                {
-                    isMoveToBin = true;
-                    break;
-                }
+	            // if ensure correct date was called by another event, do nothing
+	            if (this.Flagged(EnsureCorrectDate, e.Entity.Id.ToString())) { continue; }
 
-                current = contentService.GetById(current.ParentId);
-            }
+	            // if thie move was a result of EnsureCorrectParentForPost, do nothing
+	            if (this.Flagged(EnsureCorrectParentForPost, e.Entity.Id.ToString())) { continue; }
 
-            if (!isMoveToBin)
-            {
-                SetFlag(EnsureCorrectDate, e.Entity.Id.ToString());
-                DateFolderService.Instance.EnsureCorrectDate(e.Entity);
+	            // this may have been a move to the recycle bin!
+	            bool isMoveToBin = e.Entity.ParentId == -20;
+
+	            // check up the .parent path for recycle bin
+	            var current = sender.GetById(e.Entity.Id);
+	            while (current.ParentId != -1)
+	            {
+		            if (current.ParentId == -20)
+		            {
+			            isMoveToBin = true;
+			            break;
+		            }
+
+		            current = sender.GetById(current.ParentId);
+	            }
+
+	            if (!isMoveToBin)
+	            {
+		            SetFlag(EnsureCorrectDate, e.Entity.Id.ToString());
+		            DateFolderService.Instance.EnsureCorrectDate(e.Entity);
+	            }
             }
         }
 
@@ -204,35 +196,32 @@
         private bool Flagged(string cachePrefix, string suffix)
         {
             var key = cachePrefix + suffix;
-            var cached = HttpContext.Current.Items[key] as string;
-
-            if (cached == null)
-            {
-                return false;
-            }
-
-            return true;
+            return bool.Parse(_requestCache.GetCacheItem<string>(key));
+            
         }
 
         private void SetFlag(string cachePrefix, string suffix)
         {
             var key = cachePrefix + suffix;
-            var cached = HttpContext.Current.Items[key] as string;
+            var cached = _requestCache.Get(key) as string;
 
             if (cached == null)
             {
-                HttpContext.Current.Items.Add(key, "true");
+	            _requestCache.GetCacheItem<string>(key, () => "true");
             }
         }
 
-        //public void OnApplicationStarting(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        //{
+        public void Initialize()
+        {
+	        ContentService.Saving += this.ContentService_Creating;
+	        ContentService.Saved += this.ContentService_Saved;
+	        ContentService.Moved += this.ContentService_Moved;
+            ContentService.Publishing += ContentService_Publishing;
+        }
 
-        //}
-
-        //public void OnApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        //{
-
-        //}
+        public void Terminate()
+        {
+	        
+        }
     }
 }

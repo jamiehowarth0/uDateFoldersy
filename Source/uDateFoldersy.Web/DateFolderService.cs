@@ -1,12 +1,8 @@
-﻿using Umbraco.Core.Services;
-
-namespace uDateFoldersy
+﻿namespace uDateFoldersy
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
-    using Umbraco.Web;
 
     using uDateFoldersy.Comparers;
     using uDateFoldersy.Extensions;
@@ -15,7 +11,12 @@ namespace uDateFoldersy
     using uHelpsy.Helpers;
 
     using Umbraco.Core;
+    using Umbraco.Core.Composing;
     using Umbraco.Core.Models;
+	using Umbraco.Core.Models.PublishedContent;
+    using Umbraco.Web;
+
+    using Umbraco.Core.Services;
 
     interface IDateFolderService
     {
@@ -31,10 +32,13 @@ namespace uDateFoldersy
     {
         #region Singleton
 
-        protected static volatile DateFolderService m_Instance = new DateFolderService();
+        protected static volatile DateFolderService m_Instance = new DateFolderService(Current.Services.ContentService);
         protected static object syncRoot = new Object();
+        private readonly IContentService _contentService;
 
-        protected DateFolderService() { }
+        public DateFolderService(IContentService contentService) {
+            _contentService = contentService;
+        }
 
         public static DateFolderService Instance
         {
@@ -45,7 +49,7 @@ namespace uDateFoldersy
                     lock (syncRoot)
                     {
                         if (m_Instance == null)
-                            m_Instance = new DateFolderService();
+                            m_Instance = new DateFolderService(Current.Services.ContentService);
                     }
                 }
 
@@ -68,7 +72,6 @@ namespace uDateFoldersy
         {
             var config = ConfigReader.Instance;
 
-            var contentService = ApplicationContext.Current.Services.ContentService;
             var dateAlias = config.GetDatePropertyAlias();
             var yearFolderAlias = config.GetYearFolderDocTypeAlias();
             var monthFolderAlias = config.GetMonthFolderDocTypeAlias();
@@ -77,23 +80,23 @@ namespace uDateFoldersy
             // get post date
             var postDate = doc.GetValue<DateTime>(dateAlias);
 
-            var parent = contentService.GetById(doc.ParentId);
+            var parent = _contentService.GetById(doc.ParentId);
 
             if (parent.ContentType.Alias == yearFolderAlias)
             {
-                handleYearFolderAlias(doc, parent, postDate, dateAlias, contentService);
+                handleYearFolderAlias(doc, parent, postDate, dateAlias, _contentService);
             }
             else if (parent.ContentType.Alias == monthFolderAlias)
             {
-                handleMonthFolderAlias(doc, contentService, parent, postDate, dateAlias);
+                handleMonthFolderAlias(doc, _contentService, parent, postDate, dateAlias);
             }
             else if (parent.ContentType.Alias == dayFolderAlias)
             {
-                handleDayFolderAlias(doc, contentService, parent, postDate, dateAlias);
+                handleDayFolderAlias(doc, _contentService, parent, postDate, dateAlias);
             }
             else
             {
-                handleDashboardFolderAlias(doc, dateAlias, postDate, contentService);
+                handleDashboardFolderAlias(doc, dateAlias, postDate, _contentService);
             }
 
             return doc;
@@ -163,7 +166,6 @@ namespace uDateFoldersy
         {
             var config = ConfigReader.Instance;
 
-            var contentService = ApplicationContext.Current.Services.ContentService;
             var dateAlias = config.GetDatePropertyAlias();
             var dayFolderAlias = config.GetDayFolderDocTypeAlias();
             var monthFolderAlias = config.GetMonthFolderDocTypeAlias();
@@ -172,7 +174,7 @@ namespace uDateFoldersy
             if (doc.GetValue(dateAlias) == null || doc.GetValue(dateAlias).ToString() == string.Empty || doc.GetValue(dateAlias).ToString() == DateTime.MinValue.ToString())
             {
                 doc.SetValue(dateAlias, doc.CreateDate);
-                contentService.Save(doc, raiseEvents: false);
+                _contentService.Save(doc, raiseEvents: false);
             }
 
             IContent newParent;
@@ -196,7 +198,7 @@ namespace uDateFoldersy
             if (newParent != null && newParent.Id != doc.ParentId)
             {
                 // move the node to the new parent
-                contentService.Move(doc, newParent.Id);
+                _contentService.Move(doc, newParent.Id);
 
                 // sort
                 //var nodes = new List<IContent>(contentService.GetChildren(newParent.Id));
@@ -226,17 +228,13 @@ namespace uDateFoldersy
             return list.Select(current.AncestorOrSelf).FirstOrDefault(node => node != null);
         }
 
-
-
-
-
         /// <summary>
         /// Gets the correct parent for a post based on it's new post date.
         /// </summary>
         /// <returns></returns>
         protected IContent EnsureCurrentCorrectParentForPost(IContent doc, string dateAlias, string dayFolderAlias, string monthFolderAlias, string yearFolderAlias)
         {
-            var parent = ApplicationContext.Current.Services.ContentService.GetById(doc.ParentId);
+            var parent = _contentService.GetById(doc.ParentId);
 
             // commented this out because of umbraco 7
             //if (!this.IsDateFolder(parent))
@@ -278,7 +276,7 @@ namespace uDateFoldersy
             var config = ConfigReader.Instance;
 
             var date = doc.GetValue<DateTime>(config.GetDatePropertyAlias());
-            var parent = ApplicationContext.Current.Services.ContentService.GetById(doc.ParentId);
+            var parent = _contentService.GetById(doc.ParentId);
 
             if (parent.ContentType.Alias == config.GetDayFolderDocTypeAlias())
             {
@@ -286,12 +284,12 @@ namespace uDateFoldersy
                 var hasCorrectParent = IsCorrectParent(parent, date);
                 if (hasCorrectParent == false) { return false; }
 
-                var monthFolder = ApplicationContext.Current.Services.ContentService.GetById(parent.ParentId);
+                var monthFolder = _contentService.GetById(parent.ParentId);
 
                 hasCorrectParent = IsCorrectParent(monthFolder, date);
                 if (hasCorrectParent == false) { return false; }
 
-                var yearFolder = ApplicationContext.Current.Services.ContentService.GetById(monthFolder.ParentId);
+                var yearFolder = _contentService.GetById(monthFolder.ParentId);
 
                 hasCorrectParent = IsCorrectParent(yearFolder, date);
                 if (hasCorrectParent == false) { return false; }
@@ -303,7 +301,7 @@ namespace uDateFoldersy
                 var hasCorrectParent = IsCorrectParent(parent, date);
                 if (hasCorrectParent == false) { return false; }
 
-                var yearFolder = ApplicationContext.Current.Services.ContentService.GetById(parent.ParentId);
+                var yearFolder = _contentService.GetById(parent.ParentId);
 
                 hasCorrectParent = IsCorrectParent(yearFolder, date);
                 if (hasCorrectParent == false) { return false; }
@@ -384,7 +382,7 @@ namespace uDateFoldersy
             var postDate = date; // doc.GetValue<DateTime>(dateAlias);
 
             IContent root = null;
-            var parent = ApplicationContext.Current.Services.ContentService.GetById(doc.ParentId);
+            var parent = _contentService.GetById(doc.ParentId);
 
             if (config.GetRootDocTypeAliases().Contains(parent.ContentType.Alias))
             {
@@ -484,12 +482,11 @@ namespace uDateFoldersy
         /// </returns>
         protected IContent GetYearFolder(IContent root, DateTime postDate, string yearFolderAlias)
         {
-            var contentService = ApplicationContext.Current.Services.ContentService;
+	        int temp;
+            long temp2;
 
-            int temp;
-
-            var yearFolders = contentService
-                                    .GetChildren(root.Id)
+            var yearFolders = _contentService
+									.GetPagedChildren(root.Id, 0, 0, out temp2)
                                     .Where(x => int.TryParse(x.Name, out temp)) // only take nodes which have a valid year
                                     .Where(x => x.ContentType.Alias == yearFolderAlias);
 
@@ -505,8 +502,14 @@ namespace uDateFoldersy
 
             // add new year folder to list and sort
             // ensure list is updated, and add non-folder nodes
-            var allNodes = contentService.GetChildren(root.Id).Where(x => x.ContentType.Alias != yearFolderAlias).ToList();
-            var nodes = contentService.GetChildren(root.Id).Where(x => x.ContentType.Alias == yearFolderAlias);
+            long temp3;
+            var allNodes = _contentService
+	            .GetPagedChildren(root.Id, 0, 0, out temp3)
+	            .Where(x => x.ContentType.Alias != yearFolderAlias)
+	            .ToList();
+            var nodes = _contentService
+	            .GetPagedChildren(root.Id, 0, 0, out temp3)
+	            .Where(x => x.ContentType.Alias == yearFolderAlias);
             allNodes.AddRange(nodes);
 
             IContentHelper.SortNodes(yearFolder.ParentId, allNodes, new YearComparer());
@@ -527,10 +530,12 @@ namespace uDateFoldersy
         /// <returns></returns>
         protected IContent GetMonthFolder(IContent yearFolder, DateTime postDate, string monthFolderAlias)
         {
-            var contentService = ApplicationContext.Current.Services.ContentService;
+	        long temp;
 
             // parent should be a month folder so lets get the months
-            var monthFolders = contentService.GetChildren(yearFolder.Id).Where(x => x.ContentType.Alias == monthFolderAlias);
+            var monthFolders = _contentService
+	            .GetPagedChildren(yearFolder.Id, 0, 0, out temp)
+	            .Where(x => x.ContentType.Alias == monthFolderAlias);
 
             // search for correct month
             var monthFolder = monthFolders.FirstOrDefault(x => x.Name.GetMonthNumberFromName() == postDate.Month);
@@ -544,11 +549,17 @@ namespace uDateFoldersy
             monthFolder = IContentHelper.CreateContentNode(monthName, monthFolderAlias, new Dictionary<string, object>(), yearFolder.Id, yearFolder.Published);
 
             // ensure list is updated, and add non-folder nodes
-            var allNnodes = contentService.GetChildren(yearFolder.Id).Where(x => x.ContentType.Alias != monthFolderAlias).ToList();
-            var nodes = contentService.GetChildren(yearFolder.Id).Where(x => x.ContentType.Alias == monthFolderAlias);
-            allNnodes.AddRange(nodes);
+            long temp2;
+            var allNodes = _contentService
+	            .GetPagedChildren(yearFolder.Id, 0, Int32.MaxValue, out temp2)
+	            .Where(x => x.ContentType.Alias != monthFolderAlias)
+	            .ToList();
+            var nodes = _contentService
+	            .GetPagedChildren(yearFolder.Id, 0, Int32.MaxValue, out temp2)
+	            .Where(x => x.ContentType.Alias == monthFolderAlias);
+            allNodes.AddRange(nodes);
 
-            IContentHelper.SortNodes(yearFolder.Id, allNnodes, new MonthComparer());
+            IContentHelper.SortNodes(yearFolder.Id, allNodes, new MonthComparer());
 
             return monthFolder;
         }
@@ -566,10 +577,12 @@ namespace uDateFoldersy
         /// <returns></returns>
         protected IContent GetDayFolder(IContent monthFolder, DateTime postDate, string dayFolderAlias)
         {
-            var contentService = ApplicationContext.Current.Services.ContentService;
+            long temp;
 
             // parent should be a month folder so lets get the months
-            var dayFolders = contentService.GetChildren(monthFolder.Id).Where(x => x.ContentType.Alias == dayFolderAlias);
+            var dayFolders = _contentService
+	            .GetPagedChildren(monthFolder.Id, 0, 0, out temp)
+	            .Where(x => x.ContentType.Alias == dayFolderAlias);
 
             // search for correct day
             var dayFolder = dayFolders.FirstOrDefault(x => x.Name.GetDayNumberFromString() == postDate.Day);
@@ -583,8 +596,14 @@ namespace uDateFoldersy
             dayFolder = IContentHelper.EnsureNodeExists(monthFolder.Id, dayFolder, dayFolderAlias, dayName, monthFolder.Published);
 
             // ensure list is updated, and add non-folder nodes
-            var allNodes = contentService.GetChildren(monthFolder.Id).Where(x => x.ContentType.Alias != dayFolderAlias).ToList();
-            var nodes = contentService.GetChildren(monthFolder.Id).Where(x => x.ContentType.Alias == dayFolderAlias);
+            long temp2;
+            var allNodes = _contentService
+	            .GetPagedChildren(monthFolder.Id, 0, Int32.MaxValue, out temp2)
+	            .Where(x => x.ContentType.Alias != dayFolderAlias)
+	            .ToList();
+            var nodes = _contentService
+	            .GetPagedChildren(monthFolder.Id, 0, Int32.MaxValue, out temp2)
+                .Where(x => x.ContentType.Alias == dayFolderAlias);
             allNodes.AddRange(nodes);
 
             IContentHelper.SortNodes(monthFolder.Id, allNodes, new DayComparer());

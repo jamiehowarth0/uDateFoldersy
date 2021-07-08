@@ -1,35 +1,43 @@
-﻿@*
-    Does redirect to child if exists.
-    Or, redirects up the tree too a root node (defined in /config/uDatefoldersy.config).
+﻿@inherits Umbraco.Web.Macros.PartialViewMacroPage
+@*
+	Does redirect to child if exists.
+	Or, redirects up the tree too a root node (defined in /config/uDatefoldersy.config).
 
-    To use this in a masterpage, add this:
-    
-    <umbraco:Macro runat="server" FileLocation="~/Views/uDateFoldersy/uDateFoldersyFolderRedirect.cshtml" />
+	To use this in a masterpage, add this:
+
+	<umbraco:Macro runat="server" FileLocation="~/Views/uDateFoldersy/uDateFoldersyFolderRedirect.cshtml" />
 *@
-
-
 @using uDateFoldersy
+@using uDateFoldersy.Helpers
 @using Umbraco.Web
-@using uHelpsy.Helpers
 @{
-    var current = IPublishedContentHelper.GetNode(HttpContext.Current.Items["pageID"]);
+	var current = Umbraco.AssignedContentItem;
 
-    var last = current.Children.LastOrDefault();
-    if (last != null)
-    {
-        // redirect to post
-        Response.Redirect(last.Url());
-    }
-    else
-    {
-        // redirect to landing page
-        var landing = DateFolderService.Instance.GetFirstRoot(current);
-        if (landing == null)
-        {
-            Response.Redirect("/", true);
-            return;
-        }
+	var config = ConfigReader.Instance;
 
-        Response.Redirect(landing.Url(), true);
-    }
+	var list = config.GetRootDocTypeAliases().ToList();
+	list.Add(config.GetDayFolderDocTypeAlias());
+	list.Add(config.GetMonthFolderDocTypeAlias());
+	list.Add(config.GetYearFolderDocTypeAlias());
+
+	var last = current.Children.LastOrDefault();
+	if (last != null)
+	{
+		// redirect to post
+		Response.Redirect(last.Url());
+	}
+	else
+	{
+		// redirect to landing page
+		var landing = current
+			.AncestorsOrSelf()
+			.SingleOrDefault(p => list.Contains(p.ContentType.Alias));
+		if (landing == null)
+		{
+			Response.Redirect("/", true);
+			return;
+		}
+
+		Response.Redirect(landing.Url(), true);
+	}
 }
