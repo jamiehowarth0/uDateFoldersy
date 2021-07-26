@@ -1,4 +1,8 @@
-﻿namespace uDateFoldersy.Helpers
+﻿using System.Configuration;
+using System.Web;
+using uDateFoldersy.Configuration;
+
+namespace uDateFoldersy.Helpers
 {
     using System;
     using System.Collections.Generic;
@@ -13,13 +17,14 @@
 
         #region Singleton
 
-        protected XDocument ConfigXDocument;
+        uDateFoldersySettingsSection _config;
         protected static volatile ConfigReader m_Instance = new ConfigReader();
         protected static object syncRoot = new Object();
 
         protected ConfigReader()
         {
-            this.ConfigXDocument = XDocument.Parse(File.ReadAllText(HostingEnvironment.MapPath(m_ConfigPath)));
+	        var config = ConfigurationManager.OpenExeConfiguration(HostingEnvironment.MapPath(m_ConfigPath));
+	        _config = (uDateFoldersySettingsSection)config.GetSection("uDateFoldersySettings");
         }
 
 
@@ -52,10 +57,8 @@
         /// <returns></returns>
         public IEnumerable<string> GetTargetDocTypeAliases()
         {
-            return this.ConfigXDocument
-                        .Descendants("TargetDocTypeAliases")
-                        .Single()
-                        .Value.Trim()
+            return this._config.DateFolders
+						.TargetDocTypeAliases.Value
                         .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
         }
 
@@ -68,17 +71,9 @@
         /// <returns></returns>
         public IEnumerable<string> GetRootDocTypeAliases()
         {
-            var list = this.ConfigXDocument
-                        .Descendants("RootDocTypeAliases")
-                        .Single()
-                        .Value.Trim()
-                        .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
-                        .ToList();
-        
-            //list.Add(this.GetDayFolderDocTypeAlias());
-            //list.Add(this.GetMonthFolderDocTypeAlias());
-            //list.Add(this.GetYearFolderDocTypeAlias());
-            return list;
+	        return this._config.DateFolders
+		        .RootDocTypeAliases.Value.Trim()
+		        .Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
         }
 
 
@@ -89,10 +84,7 @@
         /// <returns></returns>
         public string GetDatePropertyAlias()
         {
-            return this.ConfigXDocument
-                        .Descendants("DatePropertyAlias")
-                        .Single()
-                        .Value.Trim();
+	        return this._config.DateFolders.DatePropertyAlias.Value.Trim();
         }
 
 
@@ -103,7 +95,7 @@
         /// <returns></returns>
         public string GetDayFolderDocTypeAlias()
         {
-            return this.GetDocTypeAlias("DayFolders");
+	        return this._config.DateFolders.DayFolders.DoctypeAlias;
         }
 
 
@@ -114,7 +106,7 @@
         /// <returns></returns>
         public string GetMonthFolderDocTypeAlias()
         {
-            return GetDocTypeAlias("MonthFolders");
+	        return this._config.DateFolders.MonthFolders.DoctypeAlias;
         }
 
 
@@ -125,27 +117,9 @@
         /// <returns></returns>
         public string GetYearFolderDocTypeAlias()
         {
-            return GetDocTypeAlias("YearFolders");
+	        return this._config.DateFolders.YearFolders.DoctypeAlias;
         }
-
-
-        /// <summary>
-        /// Gets alias with name == elemName.
-        /// </summary>
-        /// <param name="elemName"></param>
-        /// <returns></returns>
-        private string GetDocTypeAlias(string elemName)
-        {
-            return this.ConfigXDocument
-                        .Descendants(elemName)
-                        .Single()
-                        .Attribute("docTypeAlias")
-                        .Value.Trim();
-        }
-
-
-
-
+        
         /// <summary>
         /// Returns true if auto sorting is selected.
         /// </summary>
@@ -153,11 +127,7 @@
         /// <returns></returns>
         public bool UseAutoDateFolders()
         {
-            var dateFolders = Enumerable.Single(this.ConfigXDocument.Descendants("DateFolders"));
-
-            var enabled = dateFolders.Attribute("enabled").Value;
-
-            return enabled == "true";
+	        return this._config.DateFolders.Enabled;
         }
 
 
@@ -169,11 +139,7 @@
         /// <returns></returns>
         public bool UseDays()
         {
-            var dateFolders = this.ConfigXDocument.Descendants("DayFolders").Single();
-
-            var enabled = dateFolders.Attribute("enabled").Value;
-
-            return enabled.ToLower() == "true";
+	        return this._config.DateFolders.DayFolders.Enabled;
         }
 
 
@@ -183,11 +149,7 @@
         /// <returns></returns>
         public bool UseMonths()
         {
-            var dateFolders = this.ConfigXDocument.Descendants("MonthFolders").Single();
-
-            var enabled = dateFolders.Attribute("enabled").Value;
-
-            return enabled.ToLower() == "true";
+	        return this._config.DateFolders.MonthFolders.Enabled;
         }
 
 
@@ -198,11 +160,7 @@
         /// <returns></returns>
         public bool UseYears()
         {
-            var dateFolders = this.ConfigXDocument.Descendants("YearFolders").Single();
-
-            var enabled = dateFolders.Attribute("enabled").Value;
-
-            return enabled.ToLower() == "true";
+	        return this._config.DateFolders.YearFolders.Enabled;
         }
 
 
@@ -212,11 +170,7 @@
         /// <returns></returns>
         public string GetMonthFormat()
         {
-            var dateFolders = this.ConfigXDocument.Descendants("FolderNameFormat").Single();
-
-            var monthFormat = dateFolders.Descendants("MonthFormat").Single().Value;
-
-            return monthFormat;
+	        return this._config.DateFolders.FolderNameFormat.MonthFormat.Value;
         }
 
 
@@ -227,11 +181,7 @@
         /// <returns></returns>
         public string GetDayFormat()
         {
-            var dateFolders = this.ConfigXDocument.Descendants("FolderNameFormat").Single();
-
-            var dayFormat = dateFolders.Descendants("DayFormat").Single().Value;
-
-            return dayFormat;
+	        return this._config.DateFolders.FolderNameFormat.DayFormat.Value;
         }
     }
 }

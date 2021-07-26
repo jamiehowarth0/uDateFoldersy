@@ -1,126 +1,68 @@
 ﻿<Project Sdk="Microsoft.Net.SDK">
-  <PropertyGroup>
-    <ProjectGuid>{347DC923-8E49-44A3-82FA-6BDFBD424554}</ProjectGuid>
-    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <RootNamespace>uDateFoldersy</RootNamespace>
-    <AssemblyName>uDateFoldersy</AssemblyName>
-    <TargetFramework>net472</TargetFramework>
-    <UseIISExpress>true</UseIISExpress>
-    <FileUpgradeFlags />
-    <UpgradeBackupLocation />
-    <IISExpressSSLPort />
-    <IISExpressAnonymousAuthentication />
-    <IISExpressWindowsAuthentication />
-    <IISExpressUseClassicPipelineMode />
-    <Use64BitIISExpress />
-    <UseGlobalApplicationHostFile />
-    <OutputPath>bin\</OutputPath>
-    <PostBuildEvent>xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy MVC\Dependencies\Libraries\uDatefoldersy" /y /i /c /h
-xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy Webforms\Dependencies\Libraries\uDatefoldersy" /y /i /c /h
-xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy Umb7\Dependencies\Libraries\uDatefoldersy" /y /i /c /h</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy MVC\Dependencies\Libraries\uDatefoldersy" /y /i /c /h
-xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy Webforms\Dependencies\Libraries\uDatefoldersy" /y /i /c /h
-xcopy "$(ProjectDir)bin\uDatefoldersy.*" "$(SolutionDir)..\..\uBlogsy\uBlogsy Umb7\Dependencies\Libraries\uDatefoldersy" /y /i /c /h</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
-  <ItemGroup>
-    <Compile Include="Comparers\Comparers.cs" />
-    <Compile Include="DateFolderService.cs" />
-    <Compile Include="Helpers\ConfigReader.cs" />
-    <Compile Include="Helpers\DateHelper.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UmbracoEvents\UmbracoNodeEventsForDateFolders.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="config\uDateFoldersy.config">
-      <SubType>Designer</SubType>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\Partials\uDateFoldersy\uDateFoldersyFolderRedirect.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\uDateFoldersyFolderRedirect.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="uLoremsy" Version="3.0.1" />
-    <PackageReference Include="UmbracoCms.Web" Version="8.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Web">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Xml.Linq" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlcese40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlceqp40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlceme40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlceer40EN.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlcecompact40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\sqlceca40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\Microsoft.VC90.CRT\msvcr90.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x64\native\Microsoft.VC90.CRT\Microsoft.VC90.CRT.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlcese40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlceqp40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlceme40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlceer40EN.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlcecompact40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\sqlceca40.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\Microsoft.VC90.CRT\msvcr90.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\iam\.nuget\packages\umbraco.sqlserverce\4.0.0.1\build\..\runtimes\win-x86\native\Microsoft.VC90.CRT\Microsoft.VC90.CRT.manifest" />
-  </ItemGroup>
+	<PropertyGroup>
+		<ProjectGuid>{347DC923-8E49-44A3-82FA-6BDFBD424554}</ProjectGuid>
+		<ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+		<RootNamespace>uDateFoldersy</RootNamespace>
+		<AssemblyName>uDateFoldersy</AssemblyName>
+		<TargetFramework>net472</TargetFramework>
+		<UseIISExpress>true</UseIISExpress>
+		<FileUpgradeFlags />
+		<UpgradeBackupLocation />
+		<IISExpressSSLPort />
+		<IISExpressAnonymousAuthentication />
+		<IISExpressWindowsAuthentication />
+		<IISExpressUseClassicPipelineMode />
+		<Use64BitIISExpress />
+		<UseGlobalApplicationHostFile />
+		<OutputPath>bin\</OutputPath>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<PropertyGroup>
+		<VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<Version>2.0.0</Version>
+		<Authors>Anthony Dang, Jamie Howarth</Authors>
+		<Company>N/A</Company>
+		<Copyright>Anthony Dang, Jamie Howarth</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/jamiehowarth0/uDateFoldersy/</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/jamiehowarth0/uDateFoldersy/</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>udatefoldersy umbraco</PackageTags>
+	</PropertyGroup>
+	<Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+	<ItemGroup>
+		<Content Include="config\uDateFoldersy.config">
+			<SubType>Designer</SubType>
+		</Content>
+		<Content Include="Views\uDateFoldersyFolderRedirect.cshtml" />
+		<Content Include="Views\Partials\uDateFoldersy\uDateFoldersyFolderRedirect.cshtml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="UmbracoEvents\.svn\entries" />
+	  <None Include="UmbracoEvents\.svn\text-base\uLoremsy.cs.svn-base" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="uLoremsy" Version="3.0.1" />
+		<PackageReference Include="UmbracoCms.Web" Version="8.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="Microsoft.CSharp" />
+		<Reference Include="System" />
+		<Reference Include="System.Web" />
+		<Reference Include="System.Xml.Linq" />
+	</ItemGroup>
+	<Target Name="PushToNuget" AfterTargets="Pack">
+		<Exec Command="dotnet nuget push $(ProjectDir)$(OutputPath)..\$(AssemblyName).$(Version).nupkg -s http://local.nuget.org/" />
+		<Exec Command="dotnet nuget push $(ProjectDir)$(OutputPath)..\$(AssemblyName).$(Version).snupkg -s http://local.nuget.org/" />
+	</Target>
 </Project>

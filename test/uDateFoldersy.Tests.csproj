@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+	  <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\uDateFoldersy.csproj" />
+  </ItemGroup>
+
+	<Target Name="CopyConfig" AfterTargets="Build">
+        <Copy SourceFiles="..\src\config\uDateFoldersy.config;
+			  ..\src\config\uDateFoldersy.config;
+			  ..\src\config\uDateFoldersy.config"
+              DestinationFiles="
+				$(ProjectDir)$(OutputPath)uDateFoldersy.config;
+				$(ProjectDir)$(OutputPath)config\uDateFoldersy.config;
+				$(ProjectDir)config\uDateFoldersy.config" OverwriteReadOnlyFiles="true" />
+	</Target>
+
+</Project>
