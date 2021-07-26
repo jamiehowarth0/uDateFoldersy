@@ -48,10 +48,6 @@
 		<Content Include="Views\Partials\uDateFoldersy\uDateFoldersyFolderRedirect.cshtml" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Include="UmbracoEvents\.svn\entries" />
-	  <None Include="UmbracoEvents\.svn\text-base\uLoremsy.cs.svn-base" />
-	</ItemGroup>
-	<ItemGroup>
 		<PackageReference Include="uLoremsy" Version="3.0.1" />
 		<PackageReference Include="UmbracoCms.Web" Version="8.0.0" />
 	</ItemGroup>
